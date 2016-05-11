@@ -1,96 +1,168 @@
 /*!
- * \file
- * \brief
- * \author Anna Wujek
+ * \file FindManyChessboards_Processor.hpp
+ * \brief Chessboard localization component.
+ * \date Oct 20, 2010
+ * \author mboryn
  */
 
-#ifndef FindManyChessboards_HPP_
-#define FindManyChessboards_HPP_
+#ifndef FINDMANYCHESSBOARDS_PROCESSOR_HPP_
+#define FINDMANYCHESSBOARDS_PROCESSOR_HPP_
 
+#include <boost/shared_ptr.hpp>
 #include "Component_Aux.hpp"
-#include "Component.hpp"
-#include "DataStream.hpp"
+#include "Types/Objects3D/Chessboard.hpp"
+#include "Types/ImagePosition.hpp"
+#include "Types/Drawable.hpp"
+#include "Timer.hpp"
 #include "Property.hpp"
-#include "EventHandler2.hpp"
 
-#include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
+/**
+ * \defgroup FindManyChessboards FindManyChessboards
+ * \ingroup Processors
+ *
+ * \brief Locates chessboard on the image.
+ *
+ * \par Data streams:
+ *
+ * \streamin{in_img,cv::Mat}
+ * Input image.
+ * \streamout{out_chessboard,Types::Objects3D::Chessboard}
+ * Located chessboard.
+ *
+ * \par Events:
+ *
+ * \event{chessboardFound}
+ * Chessboard has been found.
+ *
+ * \event{chessboardNotFound}
+ * Chessboard has not been found.
+ *
+ *
+ *
+ * \par Event handlers:
+ *
+ * \handler{onNewImage}
+ * New image arrived
+ *
+ * \par Properties:
+ * \prop{width,int,""}
+ * Chessboard width.
+ * This is number of corners, not the number of fields. Number of corners = number of fields - 1.
+ *
+ * \prop{height,int,""}
+ * Chessboard height.
+ * This is number of corners, not the number of fields. Number of corners = number of fields - 1.
+ *
+ * \prop{squareSize,int,""}
+ * Square size in meters.
+ *
+ * \see http://opencv.willowgarage.com/documentation/cpp/camera_calibration_and_3d_reconstruction.html#cv-findchessboardcorners
+ * @{
+ *
+ * @}
+ */
 
 namespace Processors {
 namespace FindManyChessboards {
 
-/*!
- * \class FindManyChessboards
- * \brief FindManyChessboards processor class.
- *
- *
- */
-class FindManyChessboards: public Base::Component {
+using namespace cv;
+
+#define ELEMS BOOST_PP_TUPLE_TO_LIST(5, (NEAREST, LINEAR, AREA, CUBIC, LANCZOS4))
+GENERATE_ENUM_TRANSLATOR(InterpolationTranslator, int, ELEMS, INTER_);
+
+class FindManyChessboards_Processor: public Base::Component {
 public:
-	/*!
-	 * Constructor.
-	 */
-	FindManyChessboards(const std::string & name = "FindManyChessboards");
+	FindManyChessboards_Processor(const std::string & name = "");
+	virtual ~FindManyChessboards_Processor();
 
 	/*!
-	 * Destructor
+	 * Prepares communication interface.
 	 */
-	virtual ~FindManyChessboards();
-
-	/*!
-	 * Prepare components interface (register streams and handlers).
-	 * At this point, all properties are already initialized and loaded to
-	 * values set in config file.
-	 */
-	void prepareInterface();
+	virtual void prepareInterface();
 
 protected:
+	/*!
+	 * Method called when component is started
+	 * \return true on success
+	 */
+	virtual bool onStart();
 
 	/*!
-	 * Connects source to given device.
+	 * Method called when component is stopped
+	 * \return true on success
 	 */
-	bool onInit();
+	virtual bool onStop();
 
 	/*!
-	 * Disconnect source from device, closes streams, etc.
+	 * Method called when component is initialized
+	 * \return true on success
 	 */
-	bool onFinish();
+	virtual bool onInit();
 
 	/*!
-	 * Start component
+	 * Method called when component is finished
+	 * \return true on success
 	 */
-	bool onStart();
+	virtual bool onFinish();
 
 	/*!
-	 * Stop component
+	 * Method called when step is called
+	 * \return true on success
 	 */
-	bool onStop();
+	virtual bool onStep();
 
-
-	// Input data streams
-	Base::DataStreamIn<cv::Mat, Base::DataStreamBuffer::Newest, Base::Synchronization::Mutex> in_img;
-
-	// Output data streams
-	std::vector<Base::DataStreamOut<cv::Mat> *> out_img;
-
-	// Handlers
-
-	// Properties
-	Base::Property<int> colors_count;
-
-
-	// Handlers
+private:
 	void onNewImage();
 
+	void initChessboard();
+
+	/** Image stream. */
+	Base::DataStreamIn<cv::Mat> in_img;
+	/** Chessboard stream. */
+	Base::DataStreamOut<Types::Objects3D::Chessboard> out_chessboard;
+	Base::DataStreamOut<Types::ImagePosition> out_imagePosition;
+	Base::DataStreamOut<cv::Mat> out_img;
+
+	/** Located corners.*/
+	std::vector<cv::Point2f> corners;
+
+	int findChessboardCornersFlags;
+
+	Common::Timer timer;
+
+	boost::shared_ptr<Types::Objects3D::Chessboard> chessboard;
+
+	cv::Mat sub_img;
+
+	Base::Property<bool> prop_subpix;
+	Base::Property<int> prop_subpix_window;
+	Base::Property<bool> prop_scale;
+	Base::Property<int> prop_scale_factor;
+	Base::Property<int> prop_width;
+	Base::Property<int> prop_height;
+	Base::Property<float> prop_square_width;
+	Base::Property<float> prop_square_height;
+
+	Base::Property<bool> prop_fastCheck;
+	Base::Property<bool> prop_filterQuads;
+	Base::Property<bool> prop_adaptiveThreshold;
+	Base::Property<bool> prop_normalizeImage;
+
+	Base::Property<int, InterpolationTranslator> prop_interpolation_type;
+
+// TODO: add unit types: found and not found
+
+	void sizeCallback(int old_value, int new_value);
+	void flagsCallback(bool old_value, bool new_value);
 };
 
-} //: namespace FindManyChessboards
-} //: namespace Processors
+} // namespace FindManyChessboards {
 
-/*
- * Register processor component.
- */
-REGISTER_COMPONENT("FindManyChessboards", Processors::FindManyChessboards::FindManyChessboards)
+} // namespace Processors {
 
-#endif /* FindManyChessboards_HPP_ */
+REGISTER_COMPONENT("FindManyChessboards", Processors::FindManyChessboards::FindManyChessboards_Processor)
+
+#endif /* FINDMANYCHESSBOARDS_PROCESSOR_HPP_ */

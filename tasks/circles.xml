@@ -1,0 +1,67 @@
+<Task>
+	<!-- reference task information -->
+	<Reference>
+		<Author>
+			<name>Maciej Stefańczyk</name>
+			<link></link>
+		</Author>
+
+		<Description>
+			<brief>Circles detection</brief>
+			<full>Circles detection</full>
+		</Description>
+	</Reference>
+
+	<!-- task definition -->
+	<Subtasks>
+		<Subtask name="Processing">
+			<Executor name="Exec1" period="0.01">
+				<Component name="Source" type="CvBasic:Sequence" priority="1" bump="0">
+					<param name="sequence.pattern">.*\.jpg</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/</param>
+					<param name="mode.loop">1</param>
+					<param name="mode.auto_next_image">false</param>
+				</Component>
+
+				<Component name="ColorConv" type="CvBasic:CvColorConv" priority="2">
+                    <param name="type">BGR2GRAY</param>
+				</Component>
+
+
+				<Component name="Circles" type="CvBasic:CvHoughCircles" priority="3">
+                    <param name="inverseRatioOfAccumulatorResolution">1</param>
+                    <param name="minDist">100</param>
+                    <param name="cannyHigherThreshold">200</param>
+                    <param name="accumulatorThreshold">100</param>
+                    <param name="minCircleRadius">0</param>
+                    <param name="maxCircleRadius">0</param>
+				</Component>
+
+				<Component name="Window" type="CvBasic:CvWindow" priority="4" bump="0">
+					<param name="count">2</param>
+					<param name="title">rgb, gray</param>
+				</Component>
+			</Executor>
+		</Subtask>
+	</Subtasks>
+
+	<!-- connections between events and handelrs -->
+	<Events>
+	</Events>
+
+	<!-- pipes connecting datastreams -->
+	<DataStreams>
+		<Source name="Source.out_img">
+			<sink>ColorConv.in_img</sink>
+			<sink>Window.in_img0</sink>
+		</Source>
+		<Source name="ColorConv.out_img">
+			<sink>Circles.in_img</sink>
+			<sink>Window.in_img1</sink>
+		</Source>
+		<Source name="Circles.out_circles">
+            <sink>Window.in_draw</sink>
+		</Source>
+	</DataStreams>
+</Task>
+
