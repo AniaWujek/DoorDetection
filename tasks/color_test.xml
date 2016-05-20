@@ -1,0 +1,78 @@
+<Task>
+
+	<!-- task definition -->
+	<Subtasks>
+		<Subtask name="Main">
+			<Executor name="Processing"  period="1">
+				<Component name="Sequence" type="CvBasic:Sequence" priority="1" bump="0">
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/drzwi_cale/male_drzwi_cale/</param>
+					<param name="sequence.pattern">.*\.jpg</param>
+					<param name="mode.loop">1</param>
+					<param name="mode.auto_next_image">false</param>
+				</Component>
+
+				<Component name="InRange" type="DoorDetection:CvInRange" priority="2">
+                    <param name="prop_H_max">110</param>
+                    <param name="prop_H_min">100</param>
+                    <param name="prop_S_max">255</param>
+                    <param name="prop_S_min">160</param>
+                    <param name="prop_V_max">255</param>
+                    <param name="prop_V_min">0</param>
+				</Component>
+
+				<Component name="GaussianBlur" type="CvBasic:CvGaussianBlur" priority="3">
+					<param name="kernel.width">5</param>
+					<param name="kernel.height">5</param>
+					<param name="sigma.x">2</param>
+					<param name="sigma.y">2</param>
+				</Component>
+
+				<Component name="ColorConv" type="CvBasic:CvColorConv" priority="4">
+                    <param name="type">BGR2GRAY</param>
+				</Component>
+
+				<Component name="Circles" type="CvBasic:CvHoughCircles" priority="5">
+                    <param name="inverseRatioOfAccumulatorResolution">1</param>
+                    <param name="minDist">60</param>
+                    <param name="cannyHigherThreshold">20</param>
+                    <param name="accumulatorThreshold">10</param>
+                    <param name="minCircleRadius">5</param>
+                    <param name="maxCircleRadius">20</param>
+				</Component>
+
+				<Component name="Window" type="CvBasic:CvWindow" priority="6" bump="0">
+					<param name="count">2</param>
+					<param name="title">inrange, circles</param>
+				</Component>
+			</Executor>
+		</Subtask>
+
+	</Subtasks>
+
+	<!-- pipes connecting datastreams -->
+	<DataStreams>
+		<Source name="Sequence.out_img">
+			<sink>Window.in_img1</sink>
+			<sink>InRange.in_img</sink>
+		</Source>
+		<Source name="InRange.out_img">
+			<sink>GaussianBlur.in_img</sink>
+		</Source>
+		<Source name="GaussianBlur.out_img">
+			<sink>ColorConv.in_img</sink>
+			<sink>Window.in_img0</sink>
+		</Source>
+		<Source name="ColorConv.out_img">
+			<sink>Circles.in_img</sink>
+		</Source>
+		<Source name="Circles.out_circles">
+            <sink>Window.in_draw1</sink>
+		</Source>
+	</DataStreams>
+
+
+</Task>
+
+
+
+

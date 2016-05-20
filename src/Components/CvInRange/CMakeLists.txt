@@ -9,10 +9,10 @@ FIND_PACKAGE( OpenCV REQUIRED )
 
 
 # Create an executable file from sources:
-ADD_LIBRARY(SeparateColors SHARED ${files})
+ADD_LIBRARY(CvInRange SHARED ${files})
 
 # Link external libraries
-TARGET_LINK_LIBRARIES(SeparateColors ${DisCODe_LIBRARIES} 
+TARGET_LINK_LIBRARIES(CvInRange ${DisCODe_LIBRARIES} 
 	${OpenCV_LIBS})
 
-INSTALL_COMPONENT(SeparateColors)
+INSTALL_COMPONENT(CvInRange)
